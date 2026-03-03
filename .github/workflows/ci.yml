@@ -1,0 +1,43 @@
+name: CI
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize]
+    branches:
+      - main
+
+jobs:
+  build-and-test:
+    name: Lint, type-check and test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+
+      - name: Install system dependencies (audio)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y portaudio19-dev
+
+      - name: Install Poetry
+        uses: abatilo/actions-poetry@v3
+        with:
+          poetry-version: "1.8.3"
+
+      - name: Install dependencies (with dev)
+        run: poetry install --with dev
+
+      - name: Lint (ruff)
+        run: make lint
+
+      - name: Type-check (mypy)
+        run: make type-check
+
+      - name: Run tests with coverage (min 80%)
+        run: poetry run pytest --cov=entzun --cov-report=term-missing --cov-fail-under=80

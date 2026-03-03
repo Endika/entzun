@@ -19,54 +19,48 @@ wheels/
 *.egg-info/
 .installed.cfg
 *.egg
-.env
-.venv
+
+# Virtual environments
 venv/
+env/
 ENV/
-.pytest_cache/
-.coverage
-htmlcov/
+.venv
 
-# Node.js
-node_modules/
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-.pnpm-debug.log*
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
-dist/
-build/
-
-# IDEs and editors
-.idea/
+# IDE
 .vscode/
+.idea/
 *.swp
 *.swo
-*.swn
-*.bak
-*.sublime-workspace
-*.sublime-project
+*~
 
-# OS generated files
+# OS
 .DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
 Thumbs.db
 
-# Docker
-.docker/
-docker-compose.override.yml
+# Application specific
+*.pdf
+*.txt
+temp_graph.png
+Reunion_*.pdf
+Transcripcion_*.txt
 
-# Project specific
-backend/.env
-*.mp3
-*.wav
-*.ogg
-*.m4a
-*.log 
+# API Keys (seguridad)
+.env
+config.py
+secrets.py
+
+# Mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Ruff
+.ruff_cache/
+
+# Pytest
+.pytest_cache/
+.coverage
+coverage.xml
+
+# Logs
+*.log
