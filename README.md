@@ -1,146 +1,64 @@
-# Audio Transcription Project
+## Entzun
 
-A project to transcribe audio and generate visualizations using Whisper, ChatGPT, and D3.js.
+Desktop assistant for meeting transcription, sentiment analysis, and summarisation using OpenAI, built with Tkinter and Python 3.14.
 
-## Architecture
+### Features
 
-The project consists of two main parts:
+- Record audio from your microphone.
+- Transcribe speech to text.
+- Analyse sentiment over time and visualise it.
+- Generate short meeting summaries and simple PDF/text reports.
 
-- **Backend**: FastAPI API that uses Whisper to transcribe audio and ChatGPT to generate reports.
-- **Frontend**: React application that allows recording or uploading audio files and displays report visualizations.
+### Prerequisites
 
-## Requirements
+- Python 3.14 (recommended via `conda` env, e.g. `py314`).
+- Poetry installed (`pipx install poetry` or similar).
+- System audio dependencies for microphone access (`PyAudio`, OS‑specific libs).
+- An OpenAI API key.
 
-- Python 3.12+
-- Node.js 23+
-- Poetry for Python dependency management
-- npm for JavaScript dependency management
-- Docker and Docker Compose (optional)
-
-## Installation
-
-### Using Make
+### Quick start
 
 ```bash
-# Install all dependencies (backend and frontend)
-make install
+git clone git@github.com:Endika/entzun.git
+cd entzun
 
-# Install only the backend
-make backend-install
+# Install dependencies
+make dev-install
 
-# Install only the frontend
-make frontend-install
+# Configure your OpenAI key (example)
+echo 'OPENAI_API_KEY="your_api_key_here"' > .env
+
+# Run the app
+make run
 ```
 
-### Manual Installation
+### Development
 
-```bash
-# Backend
-cd backend
-poetry env remove --all
-poetry config virtualenvs.in-project true
-poetry install
+- **Format & lint**: `make format` and `make lint`
+- **Type-check**: `make type-check`
+- **Tests**: `make test`
+- **Coverage (min 80% in CI)**: `make coverage`
+- **Pre-commit hooks**:
+  - Install once with: `make pre-commit-install`
+  - On every commit:
+    - `ruff`, `mypy`, `pytest`
+    - Conventional Commit message validation
 
-# Frontend
-cd frontend
-npm install
-```
+### Architecture (high level)
 
-## Configuration
+- **UI (inbound adapter)**: Tkinter app in `entzun/ui/app.py`.
+- **Domain**: Core models and behaviour in `entzun/domain`.
+- **Application**: Ports and use-cases in `entzun/application`.
+- **Adapters (outbound)**: OpenAI client, transcription, reporting in `entzun/adapters`.
 
-1. Create a `.env` file in the `backend` directory based on `.env.example`:
+The goal is to keep business logic independent from the UI and external services (Hexagonal Architecture + DDD + SOLID).
 
-```bash
-cp backend/.env.example backend/.env
-```
+### CI & automation
 
-2. Edit the `.env` file and add your OpenAI API key:
+- GitHub Actions workflow runs on pull requests:
+  - `make lint`, `make type-check`
+  - Tests with coverage (>= 80%)
+- Dependabot:
+  - Checks Python/Poetry deps and GitHub Actions weekly.
+  - Groups minor/patch updates, majors in separate PRs.
 
-```
-OPENAI_API_KEY=your_api_key_here
-```
-
-## Execution
-
-### Using Make
-
-```bash
-# Run the entire project (backend and frontend)
-make all-run
-
-# Run only the backend
-make backend-run
-
-# Run only the frontend
-make frontend-run
-```
-
-### Manual Execution
-
-```bash
-# Backend
-cd backend
-poetry run uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
-
-# Frontend
-cd frontend
-npm run dev
-```
-
-### Using Docker
-
-```bash
-# Build images
-make docker-build
-
-# Start services
-make docker-run
-
-# Stop services
-make docker-stop
-```
-
-## Development
-
-### Linting and Formatting
-
-```bash
-# Run linting on the entire project
-make lint
-
-# Format the entire project
-make format
-
-# Backend only
-make backend-lint
-make backend-format
-
-# Frontend only
-make frontend-lint
-make frontend-format
-```
-
-### Tests
-
-```bash
-# Run backend tests
-make test
-```
-
-## Features
-
-- Real-time audio transcription using Whisper
-- Report generation using ChatGPT
-- Data visualization with D3.js
-- Audio recording and streaming
-- Audio file uploads
-
-## Backend Endpoints
-
-- `POST /api/v1/transcription/transcribe`: Transcribes an audio file and generates a report
-- `POST /api/v1/transcription/transcribe/stream`: Streaming transcription and report generation
-
-## Access
-
-- **Backend API**: http://localhost:8000
-- **Frontend App**: http://localhost:5173 (development) or http://localhost (Docker)

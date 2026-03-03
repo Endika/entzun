@@ -1,45 +1,31 @@
-.PHONY: lint format test install backend-install backend-lint backend-format backend-test frontend-install frontend-lint frontend-format docker-build docker-run docker-stop
+POETRY ?= poetry
 
-PYTHON_PATH = python
-POETRY_PATH = poetry
-NPM_PATH = npm
+.PHONY: install dev-install run format lint type-check test coverage pre-commit-install
 
-backend-install:
-	cd backend && $(POETRY_PATH) env remove --all
-	cd backend && $(POETRY_PATH) config virtualenvs.in-project true
-	cd backend && $(POETRY_PATH) install
+install:
+	$(POETRY) install
 
-backend-lint:
-	cd backend && $(POETRY_PATH) run ruff check app
+dev-install:
+	$(POETRY) install --with dev
 
-backend-format:
-	cd backend && $(POETRY_PATH) run ruff format app
+run:
+	$(POETRY) run python run.py
 
-backend-test:
-	cd backend && $(POETRY_PATH) run pytest
+format:
+	$(POETRY) run ruff format .
 
-frontend-install:
-	cd frontend && $(NPM_PATH) install
+lint:
+	$(POETRY) run ruff check --fix .
 
-frontend-lint:
-	cd frontend && $(NPM_PATH) run lint
+type-check:
+	$(POETRY) run mypy entzun
 
-frontend-format:
-	cd frontend && $(NPM_PATH) run format
+test:
+	$(POETRY) run pytest
 
-install: backend-install frontend-install
+coverage:
+	$(POETRY) run pytest --cov=entzun --cov-report=term-missing
 
-lint: backend-lint frontend-lint
+pre-commit-install:
+	$(POETRY) run pre-commit install
 
-format: backend-format frontend-format
-
-test: backend-test
-
-docker-build:
-	docker-compose build
-
-docker-run:
-	docker-compose up
-
-docker-stop:
-	docker-compose down

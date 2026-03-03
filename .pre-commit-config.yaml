@@ -1,0 +1,29 @@
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.8.4
+    hooks:
+      - id: ruff
+        args: ["--fix"]
+
+  - repo: local
+    hooks:
+      - id: mypy
+        name: mypy (entzun)
+        entry: poetry run mypy entzun
+        language: system
+        pass_filenames: false
+        stages: [commit]
+
+      - id: pytest
+        name: pytest
+        entry: poetry run pytest
+        language: system
+        pass_filenames: false
+        stages: [commit]
+
+  - repo: https://github.com/compilerla/conventional-pre-commit
+    rev: v3.5.0
+    hooks:
+      - id: conventional-pre-commit
+        stages: [commit-msg]
+

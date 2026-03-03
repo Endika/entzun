@@ -1,0 +1,87 @@
+[tool.poetry]
+name = "entzun"
+version = "0.1.0"
+description = "Entzun: copiloto IA con análisis de sentimiento y resumen de reuniones"
+authors = ["Endika Iglesias <endika@example.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.14"
+openai = "^1.58.1"
+SpeechRecognition = "^3.10.4"
+matplotlib = "^3.9.3"
+fpdf = "^1.7.2"
+PyAudio = "^0.2.14"
+pydub = "^0.25.1"
+
+[tool.poetry.group.dev.dependencies]
+ruff = "^0.8.4"
+mypy = "^1.13.0"
+pytest = "^8.3.4"
+pre-commit = "^3.8.0"
+pytest-cov = "^5.0.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.ruff]
+line-length = 100
+target-version = "py313"
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "I",   # isort
+    "N",   # pep8-naming
+    "UP",  # pyupgrade
+    "B",   # flake8-bugbear
+    "C4",  # flake8-comprehensions
+    "SIM", # flake8-simplify
+]
+ignore = []
+
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["F401"]
+
+[tool.mypy]
+python_version = "3.13"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_no_return = true
+strict_equality = true
+
+[[tool.mypy.overrides]]
+module = [
+    "speech_recognition.*",
+    "fpdf.*",
+    "matplotlib.*",
+    "pydub.*",
+]
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = [
+    "tests.*",
+]
+ignore_errors = true
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
+
+[tool.coverage.run]
+source = ["entzun"]
+
+[tool.coverage.report]
+omit = [
+    "entzun/ui/app.py",
+]
