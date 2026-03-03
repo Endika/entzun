@@ -7,7 +7,7 @@ readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.14"
-openai = "^1.58.1"
+openai = "^2.24.0"
 SpeechRecognition = "^3.10.4"
 matplotlib = "^3.9.3"
 fpdf = "^1.7.2"
