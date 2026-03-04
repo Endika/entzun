@@ -6,7 +6,12 @@ import speech_recognition as sr
 
 
 class SentimentAnalyzerPort(Protocol):
-    def analyze(self, text: str, context: list[str]) -> tuple[int, str]: ...
+    def analyze(
+        self,
+        text: str,
+        context: list[str],
+        language: str | None = None,
+    ) -> tuple[int, str]: ...
 
 
 class MeetingSummarizerPort(Protocol):

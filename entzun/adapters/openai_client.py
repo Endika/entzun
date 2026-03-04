@@ -11,7 +11,12 @@ class OpenAISentimentAnalyzer(SentimentAnalyzerPort):
         self._recent_context = recent_context
         self._max_context_items = max_context_items
 
-    def analyze(self, text: str, context: list[str] | None = None) -> tuple[int, str]:
+    def analyze(
+        self,
+        text: str,
+        context: list[str] | None = None,
+        language: str | None = None,
+    ) -> tuple[int, str]:
         if not text or not text.strip() or len(text.strip()) < 3:
             return 0, ""
 
@@ -25,6 +30,18 @@ class OpenAISentimentAnalyzer(SentimentAnalyzerPort):
             for index, sentence in enumerate(self._recent_context[:-1], 1):
                 previous_context_str += f"{index}. {sentence}\n"
 
+        language_instruction = ""
+        if language == "es":
+            language_instruction = (
+                "\n\nIMPORTANT: Write the SUMMARY in NEUTRAL BUSINESS SPANISH. "
+                "Do not mix languages."
+            )
+        elif language == "en":
+            language_instruction = (
+                "\n\nIMPORTANT: Write the SUMMARY in PROFESSIONAL INTERNATIONAL ENGLISH. "
+                "Do not mix languages."
+            )
+
         prompt = (
             "Analyse this meeting snippet: "
             f'"{text}"\n'
@@ -36,6 +53,7 @@ class OpenAISentimentAnalyzer(SentimentAnalyzerPort):
             "Respond ONLY in this format:\n"
             "SCORE: [Number]\n"
             "SUMMARY: [Text]"
+            f"{language_instruction}"
         )
 
         response = self._client.chat.completions.create(

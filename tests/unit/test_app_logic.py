@@ -12,7 +12,12 @@ class _FakeSentimentAnalyzer:
         self.should_raise = should_raise
         self.calls: list[tuple[str, list[str]]] = []
 
-    def analyze(self, text: str, context: list[str] | None = None) -> tuple[int, str]:  # noqa: ARG002
+    def analyze(
+        self,
+        text: str,
+        context: list[str] | None = None,
+        language: str | None = None,  # noqa: ARG002
+    ) -> tuple[int, str]:
         if self.should_raise:
             raise RuntimeError("boom")
         self.calls.append((text, context or []))
@@ -51,6 +56,7 @@ def _make_partial_app() -> EntzunApp:
     app = EntzunApp.__new__(EntzunApp)  # type: ignore[call-arg]
     app.recent_context = []
     app.sentiment_analyzer = _FakeSentimentAnalyzer(5, "summary")  # type: ignore[assignment]
+    app.lang_var = _FakeVar("en")  # type: ignore[assignment]
     app._status_messages: list[str] = []
 
     def fake_log_status(message: str) -> None:

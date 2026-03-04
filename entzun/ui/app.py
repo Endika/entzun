@@ -296,13 +296,20 @@ class EntzunApp:
 
     def analyze_text(self, new_text: str) -> tuple[int, str]:
         try:
+            lang_value = self.lang_var.get()
+            summary_language = lang_value if lang_value in {"es", "en"} else None
+
             logger.info(
                 "Analysing text: %s... (context: %s sentences)",
                 new_text[:50],
                 len(self.recent_context),
             )
             self.log_status("[AI] Analysing with AI...")
-            score, summary = self.sentiment_analyzer.analyze(new_text, self.recent_context)
+            score, summary = self.sentiment_analyzer.analyze(
+                new_text,
+                self.recent_context,
+                language=summary_language,
+            )
             if summary:
                 self.log_status(f"[OK] Analysis completed (Score: {score})")
             return score, summary
