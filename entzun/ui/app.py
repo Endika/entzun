@@ -20,7 +20,7 @@ logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(levelname)s - %(message)s",
     handlers=[
-        logging.FileHandler("copilot.log", encoding="utf-8"),
+        logging.FileHandler("entzun.log", encoding="utf-8"),
         logging.StreamHandler(sys.stdout),
     ],
 )
@@ -224,7 +224,7 @@ class EntzunApp:
 
         tk.Label(
             frame_right,
-            text="Estado del Sistema",
+            text="System Status",
             font=("Arial", 10, "bold"),
         ).pack(pady=5)
         self.txt_status = scrolledtext.ScrolledText(
@@ -327,18 +327,18 @@ class EntzunApp:
         self.canvas.draw()
 
     def listen_loop(self) -> None:
-        logger.info("Iniciando loop de escucha")
-        self.log_status("[MIC] Ajustando ruido ambiente...")
+        logger.info("Starting listening loop")
+        self.log_status("[MIC] Adjusting ambient noise...")
 
         try:
             with self.mic as source:
                 self.recognizer.adjust_for_ambient_noise(source, duration=2)
-                self.log_status("[OK] Microfono listo. Habla ahora...")
-                logger.info("Microfono configurado, esperando audio")
+                self.log_status("[OK] Microphone ready. You can speak now...")
+                logger.info("Microphone configured, waiting for audio")
 
                 while self.is_listening:
                     try:
-                        self.log_status("[LISTEN] Escuchando...")
+                        self.log_status("[LISTEN] Listening...")
 
                         self.recognizer.energy_threshold = 300
                         self.recognizer.dynamic_energy_threshold = True
@@ -351,16 +351,16 @@ class EntzunApp:
 
                         audio_data = audio.get_raw_data()
                         if len(audio_data) < 1000:
-                            logger.debug("Audio demasiado corto, ignorando")
+                            logger.debug("Audio too short, ignoring")
                             continue
 
-                        logger.info("Audio capturado, transcribiendo...")
+                        logger.info("Audio captured, transcribing...")
 
                         if self.use_whisper_api:
-                            self.log_status("Transcribiendo con Whisper API...")
+                            self.log_status("Transcribing with Whisper API...")
                             text = self.transcribe_with_whisper(audio)
                         else:
-                            self.log_status("Transcribiendo con Google Speech...")
+                            self.log_status("Transcribing with Google Speech...")
                             text = self.transcribe_with_google(audio)
 
                         logger.info("Texto transcrito: %s", text)
@@ -372,7 +372,7 @@ class EntzunApp:
                                 self.txt_transcript.insert(tk.END, f"- {value}\n")
 
                             self.root.after(0, append_transcript)
-                            self.log_status(f"[OK] Transcrito: {text[:30]}...")
+                            self.log_status(f"[OK] Transcribed: {text[:30]}...")
 
                             score, resumen = self.analizar_texto(text)
                             if resumen and resumen != "Error analizando.":
@@ -387,41 +387,41 @@ class EntzunApp:
                                 self.root.after(0, append_summary)
                                 self.root.after(0, update_graph_callback)
                         else:
-                            logger.debug("Texto vacio o muy corto, ignorando")
-                            self.log_status("[SKIP] Texto muy corto, ignorado")
+                            logger.debug("Empty or very short text, ignoring")
+                            self.log_status("[SKIP] Very short text, skipped")
 
                     except sr.WaitTimeoutError:
-                        logger.debug("Timeout esperando audio")
+                        logger.debug("Timeout waiting for audio")
                     except sr.UnknownValueError:
-                        logger.debug("No se pudo entender el audio")
+                        logger.debug("Audio could not be understood")
                     except sr.RequestError as exc:
-                        logger.error("Error de conexion con Google Speech: %s", exc)
-                        self.log_status("[ERROR] Error de conexion a Google")
+                        logger.error("Connection error with Google Speech: %s", exc)
+                        self.log_status("[ERROR] Connection error to Google")
                     except Exception as exc:
-                        logger.error("Error en listen_loop: %s", exc)
+                        logger.error("Error in listen_loop: %s", exc)
                         self.log_status(f"[ERROR] Error: {str(exc)[:40]}")
 
         except Exception as exc:
-            logger.error("Error fatal en microfono: %s", exc)
-            self.log_status(f"[ERROR] Error de microfono: {str(exc)[:40]}")
-            messagebox.showerror("Error", f"Error de microfono:\n{exc}")
+            logger.error("Fatal microphone error: %s", exc)
+            self.log_status(f"[ERROR] Microphone error: {str(exc)[:40]}")
+            messagebox.showerror("Error", f"Microphone error:\n{exc}")
 
     def processing_loop(self) -> None:
-        logger.info("Iniciando loop de procesamiento de audio")
+        logger.info("Starting audio processing loop")
 
         while self.is_listening or not self.audio_queue.empty():
             try:
                 audio = self.audio_queue.get(timeout=1)
 
-                logger.info("Procesando audio de la cola...")
-                self.log_status("Transcribiendo...")
+                logger.info("Processing audio from queue...")
+                self.log_status("Transcribing...")
 
                 if self.use_whisper_api:
                     text = self.transcribe_with_whisper(audio)
                 else:
                     text = self.transcribe_with_google(audio)
 
-                logger.info("Texto transcrito: %s", text)
+                logger.info("Transcribed text: %s", text)
 
                 if text and text.strip() and len(text.strip()) > 2:
                     self.transcript_full += text + "\n"
@@ -430,7 +430,7 @@ class EntzunApp:
                         self.txt_transcript.insert(tk.END, f"- {value}\n")
 
                     self.root.after(0, append_transcript)
-                    self.log_status(f"[OK] Transcrito: {text[:30]}...")
+                    self.log_status(f"[OK] Transcribed: {text[:30]}...")
 
                     score, resumen = self.analizar_texto(text)
                     if resumen and resumen != "Error analizando.":
@@ -445,38 +445,38 @@ class EntzunApp:
                         self.root.after(0, append_summary)
                         self.root.after(0, update_graph_callback)
                 else:
-                    logger.debug("Texto vacio o muy corto, ignorando")
-                    self.log_status("[SKIP] Texto muy corto, ignorado")
+                    logger.debug("Empty or very short text, ignoring")
+                    self.log_status("[SKIP] Very short text, skipped")
 
                 self.audio_queue.task_done()
 
             except queue.Empty:
                 continue
             except Exception as exc:
-                logger.error("Error en processing_loop: %s", exc)
-                self.log_status(f"[ERROR] Error procesando: {str(exc)[:40]}")
+                logger.error("Error in processing_loop: %s", exc)
+                self.log_status(f"[ERROR] Error processing: {str(exc)[:40]}")
 
-        logger.info("Loop de procesamiento finalizado")
+        logger.info("Audio processing loop finished")
 
     def on_closing(self) -> None:
-        logger.info("Cerrando aplicacion...")
+        logger.info("Closing application...")
         if self.is_listening:
             self.is_listening = False
-            logger.info("Deteniendo grabacion...")
+            logger.info("Stopping recording...")
             if self.processing_thread and self.processing_thread.is_alive():
-                logger.info("Esperando a que termine el procesamiento...")
+                logger.info("Waiting for processing to finish...")
                 self.processing_thread.join(timeout=5)
 
         self.root.quit()
         self.root.destroy()
-        logger.info("Aplicacion cerrada correctamente")
+        logger.info("Application closed correctly")
 
     def toggle_listening(self) -> None:
         if not self.is_listening:
-            logger.info("Usuario presiono INICIAR")
+            logger.info("User pressed START")
             self.is_listening = True
-            self.btn_start.config(text="[STOP] DETENER", bg="#ff9999")
-            self.log_status("[START] Grabacion iniciada")
+            self.btn_start.config(text="[STOP] STOP", bg="#ff9999")
+            self.log_status("[START] Recording started")
 
             threading.Thread(target=self.listen_loop, daemon=True).start()
             self.processing_thread = threading.Thread(
@@ -484,21 +484,21 @@ class EntzunApp:
                 daemon=True,
             )
             self.processing_thread.start()
-            logger.info("Threads de captura y procesamiento iniciados")
+            logger.info("Capture and processing threads started")
         else:
-            logger.info("Usuario presiono DETENER")
+            logger.info("User pressed STOP")
             self.is_listening = False
-            self.btn_start.config(text="[PLAY] INICIAR", bg="#ccffcc")
-            self.log_status("[STOP] Grabacion detenida")
-            self.log_status("[WAIT] Procesando audio restante...")
+            self.btn_start.config(text="[PLAY] START", bg="#ccffcc")
+            self.log_status("[STOP] Recording stopped")
+            self.log_status("[WAIT] Processing remaining audio...")
 
     def generar_resumen_final(self) -> None:
         if not self.transcript_full or not self.transcript_full.strip():
-            messagebox.showwarning("Aviso", "No hay transcripción para resumir.")
+            messagebox.showwarning("Warning", "There is no transcription to summarize.")
             return
 
-        logger.info("Generando resumen final de la reunion completa")
-        self.log_status("[SUMMARY] Generando resumen final...")
+        logger.info("Generating final summary of the full meeting")
+        self.log_status("[SUMMARY] Generating final summary...")
 
         try:
             num_frases = len(
@@ -515,15 +515,15 @@ class EntzunApp:
                 avg_sentiment=sentimiento_promedio,
                 num_utterances=num_frases,
             )
-            logger.info("Resumen final generado correctamente")
+            logger.info("Final summary generated correctly")
 
             ventana_resumen = tk.Toplevel(self.root)
-            ventana_resumen.title("Resumen Ejecutivo de la Reunión")
+            ventana_resumen.title("Executive Meeting Summary")
             ventana_resumen.geometry("700x600")
 
             tk.Label(
                 ventana_resumen,
-                text="Resumen Ejecutivo",
+                text="Executive Summary",
                 font=("Arial", 14, "bold"),
             ).pack(pady=10)
 
@@ -538,42 +538,42 @@ class EntzunApp:
 
             btn_cerrar = tk.Button(
                 ventana_resumen,
-                text="Cerrar",
+                text="Close",
                 command=ventana_resumen.destroy,
                 bg="#cccccc",
             )
             btn_cerrar.pack(pady=10)
 
-            self.log_status("[OK] Resumen final generado")
+            self.log_status("[OK] Final summary generated")
 
         except Exception as exc:
-            logger.error("Error al generar resumen final: %s", exc)
+            logger.error("Error generating final summary: %s", exc)
             self.log_status(
-                f"[ERROR] Error al generar resumen: {str(exc)[:40]}",
+                f"[ERROR] Error generating summary: {str(exc)[:40]}",
             )
             messagebox.showerror(
                 "Error",
-                f"Error al generar resumen:\n{exc}",
+                f"Error generating summary:\n{exc}",
             )
 
     def generar_reporte(self) -> None:
-        logger.info("Generando reporte PDF")
-        self.log_status("[PDF] Generando reporte...")
+        logger.info("Generating PDF report")
+        self.log_status("[PDF] Generating report...")
 
         if not self.transcript_full:
-            logger.warning("No hay datos para generar reporte")
-            messagebox.showwarning("Aviso", "No hay datos para guardar.")
+            logger.warning("No data available to generate report")
+            messagebox.showwarning("Warning", "There is no data to save.")
             return
 
         try:
             self.fig.savefig("temp_graph.png", dpi=150, bbox_inches="tight")
-            logger.info("Grafico guardado como temp_graph.png")
+            logger.info("Graph saved as temp_graph.png")
 
             pdf = FPDF()
             pdf.add_page()
 
             pdf.set_font("Arial", "B", 18)
-            pdf.cell(0, 15, txt="Reporte de Reunion", ln=1, align="C")
+            pdf.cell(0, 15, txt="Meeting Report", ln=1, align="C")
             pdf.set_font("Arial", "", 12)
             pdf.cell(
                 0,
@@ -585,14 +585,14 @@ class EntzunApp:
             pdf.ln(5)
 
             pdf.set_font("Arial", "B", 14)
-            pdf.cell(0, 10, txt="Grafico de Sentimiento", ln=1)
+            pdf.cell(0, 10, txt="Sentiment Chart", ln=1)
             pdf.ln(2)
 
             pdf.image("temp_graph.png", x=30, y=pdf.get_y(), w=150)
             pdf.ln(95)
 
             pdf.set_font("Arial", "B", 14)
-            pdf.cell(0, 10, txt="Resumen Ejecutivo", ln=1)
+            pdf.cell(0, 10, txt="Executive Summary", ln=1)
             pdf.ln(2)
 
             pdf.set_font("Arial", "", 11)
@@ -611,7 +611,9 @@ class EntzunApp:
                 pdf.cell(
                     0,
                     6,
-                    txt=("(Resumen fragmentado - usa RESUMEN FINAL " "para un analisis completo)"),
+                    txt=(
+                        "(Fragmented summary - use FINAL SUMMARY for a complete analysis)"
+                    ),
                     ln=1,
                 )
                 pdf.ln(2)
@@ -625,11 +627,11 @@ class EntzunApp:
                 except Exception:
                     pdf.multi_cell(0, 6, self.summary_text)
             else:
-                pdf.cell(0, 6, txt="No hay resumen disponible.", ln=1)
+                pdf.cell(0, 6, txt="No summary available.", ln=1)
 
             pdf.add_page()
             pdf.set_font("Arial", "B", 14)
-            pdf.cell(0, 10, txt="Transcripcion Completa", ln=1)
+            pdf.cell(0, 10, txt="Full Transcription", ln=1)
             pdf.ln(2)
 
             pdf.set_font("Arial", "", 10)
@@ -644,26 +646,26 @@ class EntzunApp:
                     pdf.multi_cell(0, 5, self.transcript_full)
 
             timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-            filename_pdf = f"Reunion_{timestamp}.pdf"
-            filename_txt = f"Transcripcion_{timestamp}.txt"
+            filename_pdf = f"Meeting_{timestamp}.pdf"
+            filename_txt = f"Transcription_{timestamp}.txt"
 
             pdf.output(filename_pdf)
-            logger.info("PDF guardado: %s", filename_pdf)
+            logger.info("PDF saved: %s", filename_pdf)
 
             with open(filename_txt, "w", encoding="utf-8") as file:
                 file.write(self.transcript_full)
-            logger.info("Transcripcion guardada: %s", filename_txt)
+            logger.info("Transcription saved: %s", filename_txt)
 
-            self.log_status(f"[OK] Guardado: {filename_pdf}")
+            self.log_status(f"[OK] Saved: {filename_pdf}")
             messagebox.showinfo(
-                "Exito",
-                f"Archivos guardados:\n{filename_pdf}\n{filename_txt}",
+                "Success",
+                f"Files saved:\n{filename_pdf}\n{filename_txt}",
             )
 
         except Exception as exc:
-            logger.error("Error al generar reporte: %s", exc)
-            self.log_status(f"[ERROR] Error al guardar: {str(exc)[:40]}")
+            logger.error("Error generating report: %s", exc)
+            self.log_status(f"[ERROR] Error saving: {str(exc)[:40]}")
             messagebox.showerror(
                 "Error",
-                f"Error al generar reporte:\n{exc}",
+                f"Error generating report:\n{exc}",
             )

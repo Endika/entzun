@@ -41,8 +41,8 @@ Thumbs.db
 *.pdf
 *.txt
 temp_graph.png
-Reunion_*.pdf
-Transcripcion_*.txt
+Meeting_*.pdf
+Transcription_*.txt
 
 # API Keys (seguridad)
 .env

@@ -12,14 +12,14 @@ repos:
         entry: poetry run mypy entzun
         language: system
         pass_filenames: false
-        stages: [commit]
+        stages: [pre-commit]
 
       - id: pytest
         name: pytest
         entry: poetry run pytest
         language: system
         pass_filenames: false
-        stages: [commit]
+        stages: [pre-commit]
 
   - repo: https://github.com/compilerla/conventional-pre-commit
     rev: v3.5.0

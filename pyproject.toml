@@ -1,8 +1,8 @@
 [tool.poetry]
 name = "entzun"
 version = "0.1.0"
-description = "Entzun: copiloto IA con análisis de sentimiento y resumen de reuniones"
-authors = ["Endika Iglesias <endika@example.com>"]
+description = "Entzun: AI copilot for sentiment analysis and meeting summaries"
+authors = ["Endika Iglesias <endika2@gmail.com>"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
