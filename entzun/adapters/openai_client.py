@@ -62,7 +62,25 @@ class OpenAIMeetingSummarizer(MeetingSummarizerPort):
     def __init__(self, client: OpenAI) -> None:
         self._client = client
 
-    def summarize_full(self, transcript: str, avg_sentiment: float, num_utterances: int) -> str:
+    def summarize_full(
+        self,
+        transcript: str,
+        avg_sentiment: float,
+        num_utterances: int,
+        language: str | None = None,
+    ) -> str:
+        language_instruction = ""
+        if language == "es":
+            language_instruction = (
+                "\n\nIMPORTANT: Write the entire summary in NEUTRAL BUSINESS SPANISH. "
+                "Do not mix languages."
+            )
+        elif language == "en":
+            language_instruction = (
+                "\n\nIMPORTANT: Write the entire summary in PROFESSIONAL INTERNATIONAL ENGLISH. "
+                "Do not mix languages."
+            )
+
         prompt = (
             "You are an expert assistant for analysing meetings. "
             "Analyse the following FULL meeting transcript:\n\n"
@@ -85,6 +103,7 @@ class OpenAIMeetingSummarizer(MeetingSummarizerPort):
             "5. HIGHLIGHTS:\n"
             "- 3-5 of the most important points mentioned\n\n"
             "Be concise but complete. Use a clear format with well-defined sections."
+            f"{language_instruction}"
         )
 
         response = self._client.chat.completions.create(

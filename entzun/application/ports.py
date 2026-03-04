@@ -10,7 +10,13 @@ class SentimentAnalyzerPort(Protocol):
 
 
 class MeetingSummarizerPort(Protocol):
-    def summarize_full(self, transcript: str, avg_sentiment: float, num_utterances: int) -> str: ...
+    def summarize_full(
+        self,
+        transcript: str,
+        avg_sentiment: float,
+        num_utterances: int,
+        language: str | None = None,
+    ) -> str: ...
 
 
 class TranscriptionPort(Protocol):

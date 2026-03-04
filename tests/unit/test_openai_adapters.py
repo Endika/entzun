@@ -49,6 +49,11 @@ def test_openai_meeting_summarizer_returns_content() -> None:
     client = _FakeOpenAI(expected)
     summarizer = OpenAIMeetingSummarizer(client=client)
 
-    result = summarizer.summarize_full("Transcript", avg_sentiment=1.5, num_utterances=3)
+    result = summarizer.summarize_full(
+        "Transcript",
+        avg_sentiment=1.5,
+        num_utterances=3,
+        language="en",
+    )
 
     assert result == expected

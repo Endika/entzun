@@ -9,6 +9,7 @@ from tkinter import messagebox, scrolledtext
 
 import matplotlib.pyplot as plt
 import speech_recognition as sr
+from dotenv import load_dotenv
 from fpdf import FPDF
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from openai import OpenAI
@@ -33,6 +34,7 @@ if sys.platform == "win32":
     sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8")
 
 
+load_dotenv()
 API_KEY_ENV_VAR = "OPENAI_API_KEY"
 API_KEY = os.getenv(API_KEY_ENV_VAR, "")
 
@@ -207,7 +209,7 @@ class EntzunApp:
         self.btn_summary = tk.Button(
             frame_right,
             text="[SUMMARY] FINAL SUMMARY",
-            command=self.generar_resumen_final,
+            command=self.generate_final_summary,
             bg="#87ceeb",
             height=2,
         )
@@ -216,7 +218,7 @@ class EntzunApp:
         self.btn_export = tk.Button(
             frame_right,
             text="[PDF] SAVE PDF",
-            command=self.generar_reporte,
+            command=self.generate_report,
             bg="#ffd700",
             height=2,
         )
@@ -292,18 +294,18 @@ class EntzunApp:
         message_log = message.encode("ascii", "ignore").decode("ascii")
         logger.info(message_log)
 
-    def analizar_texto(self, texto_nuevo: str) -> tuple[int, str]:
+    def analyze_text(self, new_text: str) -> tuple[int, str]:
         try:
             logger.info(
                 "Analysing text: %s... (context: %s sentences)",
-                texto_nuevo[:50],
+                new_text[:50],
                 len(self.recent_context),
             )
             self.log_status("[AI] Analysing with AI...")
-            score, resumen = self.sentiment_analyzer.analyze(texto_nuevo, self.recent_context)
-            if resumen:
+            score, summary = self.sentiment_analyzer.analyze(new_text, self.recent_context)
+            if summary:
                 self.log_status(f"[OK] Analysis completed (Score: {score})")
-            return score, resumen
+            return score, summary
         except Exception as exc:
             logger.error("AI error: %s", exc)
             self.log_status(f"[ERROR] Error analysing: {str(exc)[:50]}")
@@ -374,11 +376,11 @@ class EntzunApp:
                             self.root.after(0, append_transcript)
                             self.log_status(f"[OK] Transcribed: {text[:30]}...")
 
-                            score, resumen = self.analizar_texto(text)
-                            if resumen and resumen != "Error analizando.":
-                                self.summary_text += f"- {resumen}\n"
+                            score, summary = self.analyze_text(text)
+                            if summary and summary != "Error analizando.":
+                                self.summary_text += f"- {summary}\n"
 
-                                def append_summary(value: str = resumen) -> None:
+                                def append_summary(value: str = summary) -> None:
                                     self.txt_summary.insert(tk.END, f"• {value}\n")
 
                                 def update_graph_callback(value: int = score) -> None:
@@ -432,11 +434,11 @@ class EntzunApp:
                     self.root.after(0, append_transcript)
                     self.log_status(f"[OK] Transcribed: {text[:30]}...")
 
-                    score, resumen = self.analizar_texto(text)
-                    if resumen and resumen != "Error analizando.":
-                        self.summary_text += f"- {resumen}\n"
+                    score, summary = self.analyze_text(text)
+                    if summary and summary != "Error analizando.":
+                        self.summary_text += f"- {summary}\n"
 
-                        def append_summary(value: str = resumen) -> None:
+                        def append_summary(value: str = summary) -> None:
                             self.txt_summary.insert(tk.END, f"• {value}\n")
 
                         def update_graph_callback(value: int = score) -> None:
@@ -492,19 +494,22 @@ class EntzunApp:
             self.log_status("[STOP] Recording stopped")
             self.log_status("[WAIT] Processing remaining audio...")
 
-    def generar_resumen_final(self) -> None:
+    def generate_final_summary(self) -> None:
         if not self.transcript_full or not self.transcript_full.strip():
             messagebox.showwarning("Warning", "There is no transcription to summarize.")
             return
+
+        lang_value = self.lang_var.get()
+        summary_language = lang_value if lang_value in {"es", "en"} else None
 
         logger.info("Generating final summary of the full meeting")
         self.log_status("[SUMMARY] Generating final summary...")
 
         try:
-            num_frases = len(
+            num_utterances = len(
                 [f for f in self.transcript_full.split("\n") if f.strip()],
             )
-            sentimiento_promedio = (
+            avg_sentiment = (
                 sum(self.sentiment_history) / len(self.sentiment_history)
                 if self.sentiment_history
                 else 0
@@ -512,37 +517,45 @@ class EntzunApp:
 
             self.final_summary = self.meeting_summarizer.summarize_full(
                 transcript=self.transcript_full,
-                avg_sentiment=sentimiento_promedio,
-                num_utterances=num_frases,
+                avg_sentiment=avg_sentiment,
+                num_utterances=num_utterances,
+                language=summary_language,
             )
             logger.info("Final summary generated correctly")
 
-            ventana_resumen = tk.Toplevel(self.root)
-            ventana_resumen.title("Executive Meeting Summary")
-            ventana_resumen.geometry("700x600")
+            summary_window = tk.Toplevel(self.root)
+            if summary_language == "es":
+                window_title = "Resumen ejecutivo de la reunión"
+                header_text = "Resumen ejecutivo"
+            else:
+                window_title = "Executive Meeting Summary"
+                header_text = "Executive Summary"
+
+            summary_window.title(window_title)
+            summary_window.geometry("700x600")
 
             tk.Label(
-                ventana_resumen,
-                text="Executive Summary",
+                summary_window,
+                text=header_text,
                 font=("Arial", 14, "bold"),
             ).pack(pady=10)
 
-            texto_resumen = scrolledtext.ScrolledText(
-                ventana_resumen,
+            summary_text_widget = scrolledtext.ScrolledText(
+                summary_window,
                 wrap=tk.WORD,
                 font=("Arial", 10),
             )
-            texto_resumen.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
-            texto_resumen.insert(tk.END, self.final_summary)
-            texto_resumen.config(state=tk.DISABLED)
+            summary_text_widget.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
+            summary_text_widget.insert(tk.END, self.final_summary)
+            summary_text_widget.config(state=tk.DISABLED)
 
-            btn_cerrar = tk.Button(
-                ventana_resumen,
+            close_button = tk.Button(
+                summary_window,
                 text="Close",
-                command=ventana_resumen.destroy,
+                command=summary_window.destroy,
                 bg="#cccccc",
             )
-            btn_cerrar.pack(pady=10)
+            close_button.pack(pady=10)
 
             self.log_status("[OK] Final summary generated")
 
@@ -556,7 +569,7 @@ class EntzunApp:
                 f"Error generating summary:\n{exc}",
             )
 
-    def generar_reporte(self) -> None:
+    def generate_report(self) -> None:
         logger.info("Generating PDF report")
         self.log_status("[PDF] Generating report...")
 
@@ -569,11 +582,31 @@ class EntzunApp:
             self.fig.savefig("temp_graph.png", dpi=150, bbox_inches="tight")
             logger.info("Graph saved as temp_graph.png")
 
+            lang_value = self.lang_var.get()
+            summary_language = lang_value if lang_value in {"es", "en"} else None
+
+            if summary_language == "es":
+                title_report = "Informe de reunión"
+                title_chart = "Gráfico de sentimiento"
+                title_exec_summary = "Resumen ejecutivo"
+                title_full_transcription = "Transcripción completa"
+                no_summary_text = "No hay resumen disponible."
+                fragmented_note = (
+                    "(Resumen fragmentado - use FINAL SUMMARY para un análisis completo)"
+                )
+            else:
+                title_report = "Meeting Report"
+                title_chart = "Sentiment Chart"
+                title_exec_summary = "Executive Summary"
+                title_full_transcription = "Full Transcription"
+                no_summary_text = "No summary available."
+                fragmented_note = "(Fragmented summary - use FINAL SUMMARY for a complete analysis)"
+
             pdf = FPDF()
             pdf.add_page()
 
             pdf.set_font("Arial", "B", 18)
-            pdf.cell(0, 15, txt="Meeting Report", ln=1, align="C")
+            pdf.cell(0, 15, txt=title_report, ln=1, align="C")
             pdf.set_font("Arial", "", 12)
             pdf.cell(
                 0,
@@ -585,14 +618,14 @@ class EntzunApp:
             pdf.ln(5)
 
             pdf.set_font("Arial", "B", 14)
-            pdf.cell(0, 10, txt="Sentiment Chart", ln=1)
+            pdf.cell(0, 10, txt=title_chart, ln=1)
             pdf.ln(2)
 
             pdf.image("temp_graph.png", x=30, y=pdf.get_y(), w=150)
             pdf.ln(95)
 
             pdf.set_font("Arial", "B", 14)
-            pdf.cell(0, 10, txt="Executive Summary", ln=1)
+            pdf.cell(0, 10, txt=title_exec_summary, ln=1)
             pdf.ln(2)
 
             pdf.set_font("Arial", "", 11)
@@ -611,9 +644,7 @@ class EntzunApp:
                 pdf.cell(
                     0,
                     6,
-                    txt=(
-                        "(Fragmented summary - use FINAL SUMMARY for a complete analysis)"
-                    ),
+                    txt=fragmented_note,
                     ln=1,
                 )
                 pdf.ln(2)
@@ -627,11 +658,11 @@ class EntzunApp:
                 except Exception:
                     pdf.multi_cell(0, 6, self.summary_text)
             else:
-                pdf.cell(0, 6, txt="No summary available.", ln=1)
+                pdf.cell(0, 6, txt=no_summary_text, ln=1)
 
             pdf.add_page()
             pdf.set_font("Arial", "B", 14)
-            pdf.cell(0, 10, txt="Full Transcription", ln=1)
+            pdf.cell(0, 10, txt=title_full_transcription, ln=1)
             pdf.ln(2)
 
             pdf.set_font("Arial", "", 10)

@@ -71,10 +71,10 @@ class _FakeVar:
         self._value = value
 
 
-def test_analizar_texto_returns_analyzer_result_and_logs() -> None:
+def test_analyze_text_returns_analyzer_result_and_logs() -> None:
     app = _make_partial_app()
 
-    score, summary = app.analizar_texto("Some long enough text")
+    score, summary = app.analyze_text("Some long enough text")
 
     assert score == 5
     assert summary == "summary"
@@ -82,12 +82,12 @@ def test_analizar_texto_returns_analyzer_result_and_logs() -> None:
     assert any("Analysis completed" in msg for msg in app._status_messages)
 
 
-def test_analizar_texto_handles_exceptions() -> None:
+def test_analyze_text_handles_exceptions() -> None:
     app = _make_partial_app()
     app.sentiment_analyzer = _FakeSentimentAnalyzer(0, "", should_raise=True)  # type: ignore[assignment]
     app._status_messages = []
 
-    score, summary = app.analizar_texto("Some long enough text")
+    score, summary = app.analyze_text("Some long enough text")
 
     assert score == 0
     assert summary == "Error while analysing."
