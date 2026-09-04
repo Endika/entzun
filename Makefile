@@ -1,31 +1,30 @@
-POETRY ?= poetry
+UV ?= uv
 
 .PHONY: install dev-install run format lint type-check test coverage pre-commit-install
 
 install:
-	$(POETRY) install
+	$(UV) sync --no-dev
 
 dev-install:
-	$(POETRY) install --with dev
+	$(UV) sync --all-groups
 
 run:
-	$(POETRY) run python run.py
+	$(UV) run python run.py
 
 format:
-	$(POETRY) run ruff format .
+	$(UV) run ruff format .
 
 lint:
-	$(POETRY) run ruff check --fix .
+	$(UV) run ruff check --fix .
 
 type-check:
-	$(POETRY) run mypy entzun
+	$(UV) run mypy entzun
 
 test:
-	$(POETRY) run pytest
+	$(UV) run pytest
 
 coverage:
-	$(POETRY) run pytest --cov=entzun --cov-report=term-missing
+	$(UV) run pytest --cov=entzun --cov-report=term-missing
 
 pre-commit-install:
-	$(POETRY) run pre-commit install
-
+	$(UV) run pre-commit install
