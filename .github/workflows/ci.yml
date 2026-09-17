@@ -27,7 +27,7 @@ jobs:
           python-version: "3.14"
 
       - name: Install dependencies (with dev)
-        run: uv sync --all-groups --frozen
+        run: uv sync --all-groups --locked
 
       - name: Lint (ruff)
         run: make lint
