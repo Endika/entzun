@@ -11,7 +11,8 @@ class SentimentAnalyzerPort(Protocol):
         text: str,
         context: list[str],
         language: str | None = None,
-    ) -> tuple[int, str]: ...
+    ) -> tuple[int, str]:
+        pass
 
 
 class MeetingSummarizerPort(Protocol):
@@ -21,8 +22,10 @@ class MeetingSummarizerPort(Protocol):
         avg_sentiment: float,
         num_utterances: int,
         language: str | None = None,
-    ) -> str: ...
+    ) -> str:
+        pass
 
 
 class TranscriptionPort(Protocol):
-    def transcribe(self, audio: sr.AudioData, language_code: str | None) -> str: ...
+    def transcribe(self, audio: sr.AudioData, language_code: str | None) -> str:
+        pass
