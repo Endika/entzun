@@ -11,8 +11,8 @@ Desktop assistant for meeting transcription, sentiment analysis, and summarisati
 
 ### Prerequisites
 
-- Python 3.14 (recommended via `conda` env, e.g. `py314`).
-- Poetry installed (`pipx install poetry` or similar).
+- Python 3.14.
+- [uv](https://docs.astral.sh/uv/) installed.
 - System audio dependencies for microphone access (`PyAudio`, OS‑specific libs).
 - An OpenAI API key.
 
@@ -25,8 +25,8 @@ cd entzun
 # Install dependencies
 make dev-install
 
-# Configure your OpenAI key (example)
-echo 'OPENAI_API_KEY="your_api_key_here"' > .env
+# Configure your OpenAI key, then edit .env
+cp .env.example .env
 
 # Run the app
 make run
@@ -49,7 +49,7 @@ make run
 - **UI (inbound adapter)**: Tkinter app in `entzun/ui/app.py`.
 - **Domain**: Core models and behaviour in `entzun/domain`.
 - **Application**: Ports and use-cases in `entzun/application`.
-- **Adapters (outbound)**: OpenAI client, transcription, reporting in `entzun/adapters`.
+- **Adapters (outbound)**: OpenAI client (sentiment, summaries) and transcription (Google, Whisper) in `entzun/adapters`. PDF/text reports are written by the UI.
 
 The goal is to keep business logic independent from the UI and external services (Hexagonal Architecture + DDD + SOLID).
 
@@ -59,6 +59,6 @@ The goal is to keep business logic independent from the UI and external services
   - `make lint`, `make type-check`
   - Tests with coverage (>= 80%)
 - Dependabot:
-  - Checks Python/Poetry deps and GitHub Actions weekly.
+  - Checks Python (uv) deps and GitHub Actions weekly.
   - Groups minor/patch updates, majors in separate PRs.
 
