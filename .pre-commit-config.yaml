@@ -9,14 +9,14 @@ repos:
     hooks:
       - id: mypy
         name: mypy (entzun)
-        entry: poetry run mypy entzun
+        entry: uv run mypy entzun
         language: system
         pass_filenames: false
         stages: [pre-commit]
 
       - id: pytest
         name: pytest
-        entry: poetry run pytest
+        entry: uv run pytest
         language: system
         pass_filenames: false
         stages: [pre-commit]
