@@ -284,8 +284,8 @@ class EntzunApp:
         return self.google_transcriber.transcribe(audio, google_lang)
 
     def transcribe_with_whisper(self, audio: sr.AudioData) -> str:
-        whisper_lang = self.lang_var.get()
-        return self.whisper_transcriber.transcribe(audio, whisper_lang)
+        language_code = self.lang_var.get()
+        return self.whisper_transcriber.transcribe(audio, language_code)
 
     def log_status(self, message: str) -> None:
         timestamp = datetime.datetime.now().strftime("%H:%M:%S")
@@ -366,7 +366,7 @@ class EntzunApp:
                         logger.info("Audio captured, transcribing...")
 
                         if self.use_whisper_api:
-                            self.log_status("Transcribing with Whisper API...")
+                            self.log_status("Transcribing with OpenAI gpt-transcribe...")
                             text = self.transcribe_with_whisper(audio)
                         else:
                             self.log_status("Transcribing with Google Speech...")
