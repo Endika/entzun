@@ -36,9 +36,8 @@ class WhisperTranscriptionAdapter(TranscriptionPort):
         mp3_buffer.seek(0)
         mp3_buffer.name = "audio.mp3"
 
-        whisper_lang = language_code
-        if whisper_lang and whisper_lang != "auto":
-            language = whisper_lang if len(whisper_lang) == 2 else whisper_lang.split("-")[0][:2]
+        if language_code and language_code != "auto":
+            language = language_code if len(language_code) == 2 else language_code.split("-")[0][:2]
             transcript = self._client.audio.transcriptions.create(
                 file=mp3_buffer,
                 model="gpt-transcribe",
