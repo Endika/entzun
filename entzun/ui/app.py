@@ -156,7 +156,7 @@ class EntzunApp:
 
         rb_whisper = tk.Radiobutton(
             frame_transcription,
-            text="Whisper API (Pago)",
+            text="OpenAI gpt-transcribe (Pago)",
             variable=self.transcription_var,
             value="whisper",
             command=self.change_transcription_service,
@@ -251,14 +251,14 @@ class EntzunApp:
 
         service_names = {
             "google": "Google Speech (Free)",
-            "whisper": "OpenAI Whisper API (Paid, Legal usage)",
+            "whisper": "OpenAI gpt-transcribe API (Paid, Legal usage)",
         }
 
         logger.info("Transcription service changed to: %s", service_names[service])
         self.log_status(f"[SERVICE] {service_names[service]}")
 
         if self.use_whisper_api:
-            self.log_status("[INFO] Whisper: ~$0.006/min (~$0.36/hour)")
+            self.log_status("[INFO] gpt-transcribe: ~$0.0045/min (~$0.27/hour)")
 
     def change_language(self) -> None:
         self.current_language = self.lang_var.get()
