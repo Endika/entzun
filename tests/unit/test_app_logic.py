@@ -132,6 +132,16 @@ def test_change_transcription_service_switches_flag_and_logs() -> None:
     assert any("[SERVICE]" in msg for msg in app._status_messages)
 
 
+def test_choosing_openai_service_quotes_gpt_transcribe_price() -> None:
+    app = _make_partial_app()
+    app.transcription_var = _FakeVar("whisper")  # type: ignore[assignment]
+
+    app.change_transcription_service()
+
+    assert any("gpt-transcribe" in msg and "$0.0045/min" in msg for msg in app._status_messages)
+    assert not any("$0.006" in msg for msg in app._status_messages)
+
+
 def test_change_language_sets_current_language_and_logs() -> None:
     app = _make_partial_app()
     app.lang_var = _FakeVar("en")  # type: ignore[assignment]

@@ -49,7 +49,7 @@ make run
 - **UI (inbound adapter)**: Tkinter app in `entzun/ui/app.py`.
 - **Domain**: Core models and behaviour in `entzun/domain`.
 - **Application**: Ports and use-cases in `entzun/application`.
-- **Adapters (outbound)**: OpenAI client (sentiment, summaries) and transcription (Google, Whisper) in `entzun/adapters`. PDF/text reports are written by the UI.
+- **Adapters (outbound)**: OpenAI client (sentiment, summaries) and transcription (Google, OpenAI gpt-transcribe) in `entzun/adapters`. PDF/text reports are written by the UI.
 
 The goal is to keep business logic independent from the UI and external services (Hexagonal Architecture + DDD + SOLID).
 

@@ -39,21 +39,17 @@ class WhisperTranscriptionAdapter(TranscriptionPort):
         whisper_lang = language_code
         if whisper_lang and whisper_lang != "auto":
             language = whisper_lang if len(whisper_lang) == 2 else whisper_lang.split("-")[0][:2]
-        else:
-            language = None
-
-        if language is not None:
             transcript = self._client.audio.transcriptions.create(
                 file=mp3_buffer,
-                model="whisper-1",
-                response_format="text",
-                language=language,
+                model="gpt-transcribe",
+                response_format="json",
+                languages=[language],
             )
         else:
             transcript = self._client.audio.transcriptions.create(
                 file=mp3_buffer,
-                model="whisper-1",
-                response_format="text",
+                model="gpt-transcribe",
+                response_format="json",
             )
 
-        return transcript.strip()
+        return transcript.text.strip()

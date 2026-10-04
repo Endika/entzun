@@ -2,7 +2,10 @@ from __future__ import annotations
 
 from typing import Any
 
+import httpx2
+import pytest
 import speech_recognition as sr
+from openai import OpenAI
 from pydub import AudioSegment
 
 from entzun.adapters.transcription import GoogleTranscriptionAdapter, WhisperTranscriptionAdapter
@@ -19,22 +22,44 @@ class _FakeRecognizer(sr.Recognizer):
         return self._returned_text
 
 
-class _FakeTranscriptions:
-    def __init__(self, returned_text: str) -> None:
-        self._returned_text = returned_text
+class _CannedTranscriptionServer:
+    def __init__(self, body: dict[str, Any]) -> None:
+        self._body = body
+        self.requests: list[httpx2.Request] = []
 
-    def create(self, **_: Any) -> str:
-        return self._returned_text
+    def __call__(self, request: httpx2.Request) -> httpx2.Response:
+        request.read()
+        self.requests.append(request)
+        return httpx2.Response(200, json=self._body)
+
+    def form_fields(self) -> list[tuple[str, str]]:
+        (request,) = self.requests
+        boundary = request.headers["content-type"].split("boundary=")[1].encode()
+        fields: list[tuple[str, str]] = []
+        for part in request.content.split(b"--" + boundary):
+            head, _, value = part.partition(b"\r\n\r\n")
+            if b'name="' not in head or b"filename=" in head:
+                continue
+            name = head.split(b'name="')[1].split(b'"')[0].decode()
+            fields.append((name, value.removesuffix(b"\r\n").decode()))
+        return fields
 
 
-class _FakeAudioClient:
-    def __init__(self, returned_text: str) -> None:
-        self.transcriptions = _FakeTranscriptions(returned_text)
+def _client_for(server: _CannedTranscriptionServer) -> OpenAI:
+    return OpenAI(
+        api_key="test-key",
+        base_url="https://api.test/v1",
+        http_client=httpx2.Client(transport=httpx2.MockTransport(server)),
+        max_retries=0,
+    )
 
 
-class _FakeOpenAI:
-    def __init__(self, returned_text: str) -> None:
-        self.audio = _FakeAudioClient(returned_text)
+@pytest.fixture
+def _no_mp3_encoder(monkeypatch: pytest.MonkeyPatch) -> None:
+    def fake_export(self: AudioSegment, out_f: Any, format: str = "mp3") -> None:  # noqa: ARG002
+        out_f.write(b"dummy")
+
+    monkeypatch.setattr(AudioSegment, "export", fake_export, raising=False)
 
 
 def _make_fake_audio() -> sr.AudioData:
@@ -54,15 +79,48 @@ def test_google_transcription_adapter_uses_language_code() -> None:
     assert recognizer.last_language == "en-US"
 
 
-def test_whisper_transcription_adapter_returns_text(monkeypatch: Any) -> None:
-    def fake_export(self: AudioSegment, out_f: Any, format: str = "mp3") -> None:  # noqa: ARG002
-        out_f.write(b"dummy")
+@pytest.mark.usefixtures("_no_mp3_encoder")
+def test_openai_adapter_posts_gpt_transcribe_as_json_and_returns_text() -> None:
+    server = _CannedTranscriptionServer(
+        {"text": "  kaixo mundua \n", "languages": [{"code": "eu"}]}
+    )
+    adapter = WhisperTranscriptionAdapter(_client_for(server))
 
-    monkeypatch.setattr(AudioSegment, "export", fake_export, raising=False)
-    client = _FakeOpenAI("transcribed text")
-    adapter = WhisperTranscriptionAdapter(client)
-    audio = _make_fake_audio()
+    text = adapter.transcribe(_make_fake_audio(), "en")
 
-    text = adapter.transcribe(audio, "en")
+    assert text == "kaixo mundua"
+    (request,) = server.requests
+    assert request.url.path == "/v1/audio/transcriptions"
+    fields = server.form_fields()
+    assert ("model", "gpt-transcribe") in fields
+    assert ("response_format", "json") in fields
 
-    assert text == "transcribed text"
+
+@pytest.mark.usefixtures("_no_mp3_encoder")
+@pytest.mark.parametrize(
+    ("language_code", "expected"), [("es", "es"), ("en-US", "en"), ("eu", "eu")]
+)
+def test_openai_adapter_sends_language_as_languages_array(
+    language_code: str, expected: str
+) -> None:
+    server = _CannedTranscriptionServer({"text": "ok"})
+    adapter = WhisperTranscriptionAdapter(_client_for(server))
+
+    adapter.transcribe(_make_fake_audio(), language_code)
+
+    fields = server.form_fields()
+    assert ("languages[]", expected) in fields
+    assert all(name != "language" for name, _ in fields)
+
+
+@pytest.mark.usefixtures("_no_mp3_encoder")
+@pytest.mark.parametrize("language_code", ["auto", None])
+def test_openai_adapter_omits_languages_for_auto_detection(language_code: str | None) -> None:
+    server = _CannedTranscriptionServer({"text": "ok"})
+    adapter = WhisperTranscriptionAdapter(_client_for(server))
+
+    adapter.transcribe(_make_fake_audio(), language_code)
+
+    names = [name for name, _ in server.form_fields()]
+    assert "languages[]" not in names
+    assert "language" not in names
