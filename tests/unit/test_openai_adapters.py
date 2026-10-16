@@ -13,8 +13,10 @@ class _FakeChoice:
 class _FakeChatCompletions:
     def __init__(self, content: str) -> None:
         self._content = content
+        self.sent: list[dict[str, Any]] = []
 
-    def create(self, model: str, messages: list[dict[str, Any]], **_: Any) -> Any:  # noqa: ARG002
+    def create(self, **kwargs: Any) -> Any:
+        self.sent.append(kwargs)
         return type("Resp", (), {"choices": [_FakeChoice(self._content)]})
 
 
@@ -57,3 +59,19 @@ def test_openai_meeting_summarizer_returns_content() -> None:
     )
 
     assert result == expected
+
+
+def test_openai_adapters_ask_gpt_6_luna_with_reasoning_off() -> None:
+    sentiment_client = _FakeOpenAI("SCORE: 1\nSUMMARY: fine")
+    OpenAISentimentAnalyzer(
+        client=sentiment_client, recent_context=[], max_context_items=5
+    ).analyze("We are happy with the progress.", [])
+    summary_client = _FakeOpenAI("summary")
+    OpenAIMeetingSummarizer(client=summary_client).summarize_full(
+        "Transcript", avg_sentiment=1.5, num_utterances=3
+    )
+
+    for client in (sentiment_client, summary_client):
+        request = client.chat.completions.sent[0]
+        assert request["model"] == "gpt-6-luna"
+        assert request["reasoning_effort"] == "none"

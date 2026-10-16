@@ -4,6 +4,8 @@ from openai import OpenAI
 
 from entzun.application.ports import MeetingSummarizerPort, SentimentAnalyzerPort
 
+CHAT_MODEL = "gpt-6-luna"
+
 
 class OpenAISentimentAnalyzer(SentimentAnalyzerPort):
     def __init__(self, client: OpenAI, recent_context: list[str], max_context_items: int) -> None:
@@ -57,7 +59,8 @@ class OpenAISentimentAnalyzer(SentimentAnalyzerPort):
         )
 
         response = self._client.chat.completions.create(
-            model="gpt-4o",
+            model=CHAT_MODEL,
+            reasoning_effort="none",
             messages=[{"role": "user", "content": prompt}],
         )
         content = response.choices[0].message.content or ""
@@ -125,7 +128,8 @@ class OpenAIMeetingSummarizer(MeetingSummarizerPort):
         )
 
         response = self._client.chat.completions.create(
-            model="gpt-4o",
+            model=CHAT_MODEL,
+            reasoning_effort="none",
             messages=[{"role": "user", "content": prompt}],
             temperature=0.3,
         )
