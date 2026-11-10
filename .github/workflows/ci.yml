@@ -10,6 +10,9 @@ jobs:
   build-and-test:
     name: Lint, type-check and test
     runs-on: ubuntu-latest
+    env:
+      # Ubuntu 26.04 ships a python3.14 without tkinter; uv's managed build bundles it.
+      UV_PYTHON_PREFERENCE: only-managed
 
     steps:
       - name: Checkout repository
